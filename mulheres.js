@@ -36,7 +36,7 @@ async function criaMulher(request, response) {
         const mulherCriada = await novaMulher.save()
         response.status(201).json(mulherCriada)
     } catch (erro) {
-        
+
         console.log(erro)
     }
 }
@@ -72,10 +72,10 @@ async function corrigeMulher(request, response) {
 
 //DELETE
 async function deletaMulher(request, response) {
-    try{
+    try {
         await Mulher.findByIdAndDelete(request.params.id)
-        response.json({messagem:'Mulher deletada com sucesso!'})
-    }catch(erro){
+        response.json({ messagem: 'Mulher deletada com sucesso!' })
+    } catch (erro) {
         console.log(erro)
     }
 }
