@@ -43,7 +43,7 @@ async function criaMulher(request, response) {
 
 //PATCH - corrigir
 async function corrigeMulher(request, response) {
-    //aqui eu encontro a mulher 
+    //aqui eu encontro a mulher - ok
     try {
         const mulherEncontrada = await Mulher.findById(request.params.id)
         if (request.body.nome) {
