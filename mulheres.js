@@ -1,82 +1,91 @@
-const express = require("express")
-const router = express.Router()
+const express = require("express") //aqui estou iniciando o express
+const router = express.Router() //aqui estou configurando a primeira parte da rota
+const cors = require('cors') //aqui estou trazendo o pacote cors, que permite consumir esta API no front-end
 
-const app = express()
-const porta = 3333
+const conectaBancoDeDados = require('./bancoDeDados') //aqui estou ligando ao arquivo bancoDeDados
+conectaBancoDeDados() // aqui estou chamando a função que conecta o banco de dados
 
-const mulheres = [
-    {
-        nome: 'Ada Lovelace',
-        imagem: 'https://s2-techtudo.glbimg.com/7YOBBhghbMF9wsUuBP7UcUh2yXI=/0x342:2439x2307/1008x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_08fbf48bc0524877943fe86e43087e7a/internal_photos/bs/2021/n/3/FbrmyhQneVYWGUPIe8vA/adalovelace.jpg',
-        minibio: 'Primeira programadora'
-    },
+const Mulher = require('./mulherModel')
 
-    {
-        nome: 'Carol Shaw',
-        imagem: 'https://i0.wp.com/www.memoriabit.com.br/wp-content/uploads/2014/07/Carol-Shaw-com-premios-por-River-Raid.jpg?resize=696%2C518&ssl=1',
-        minibio: 'Primeira mulher desenvolvedora de jogos digitais'
+const app = express()//aqui estou iniciando o app
+app.use(express.json())
+app.use(cors())
+const porta = 3333//aqui estou criando a porta
 
-    },
+//GET
+async function mostraMulheres(request, response) {
+    try {
+        const mulheresVindasDoBancoDeDados = await Mulher.find()
 
-    {
-        nome: 'Grace Happer',
-        imagem: 'https://upload.wikimedia.org/wikipedia/commons/5/55/Grace_Hopper.jpg',
-        minibio: 'A mãe da programação de computadores'
+        responde.json(mulheresVindasDoBancoDeDados)
+    } catch (erro) {
+        console.log(erro)
+    }
+}
 
-    },
-
-    {
-        nome: 'Jean Sammet',
-        imagem: 'https://projetolua.ifce.edu.br/wp-content/uploads/2020/07/ajean.jpg',
-        minibio: 'Uma das primeiras mulheres com diploma em ciência da computação'
-
-    },
-
-    {
-        nome: 'Karen Sparck Jones',
-        imagem: 'https://static01.nyt.com/images/2019/01/07/obituaries/07overlooked-Jones/00overlooked-Jones2-superJumbo-v3.jpg',
-        minibio: 'Uma das idealizadoras do conceito de "inverso da frequencia em documentos'
-
-    },
-
-    {
-        nome: 'Radia Perlman',
-        imagem: 'https://projetolua.ifce.edu.br/wp-content/uploads/2020/07/radia-perlman-blog-da-engenharia-3.jpg',
-        minibio: 'A mãe da internet'
-
-    },
-
-    {
-        nome: 'Frances Allen',
-        imagem: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/Allen_mg_2528-3750K-b.jpg/800px-Allen_mg_2528-3750K-b.jpg',
-        minibio: 'A primeira mulher a ganhar o "Nobel da informática"'
-
-    },
-
-    {
-        nome: 'Gladys West',
-        imagem: 'https://www.uninabuco.edu.br/sites/joaquimnabuco.edu.br/files/imagens/whatsapp_image_2022-07-21_at_10.34.16.jpeg',
-        minibio: 'A  mãe do GPS'
-
-    },
-
-]
-
-function mostraMulheres(request, response){
-    response.json({
-        nome: "Ada Lovelace",
-        imagem: "https://s2-techtudo.glbimg.com/7YOBBhghbMF9wsUuBP7UcUh2yXI=/0x342:2439x2307/1008x0/smart/filters:strip_icc()/i.s3.glbimg.com/v1/AUTH_08fbf48bc0524877943fe86e43087e7a/internal_photos/bs/2021/n/3/FbrmyhQneVYWGUPIe8vA/adalovelace.jpg",
-        minibio: "Primeira pessoa a criar um programa computacional"
+//POST
+async function criaMulher(request, response) {
+    const novaMulher = new Mulher({
+        nome: request.body.nome,
+        image: request.body.imagem,
+        minibio: request.body.minibio,
+        citacao: request.body.citacao
     })
+
+    try {
+        const mulherCriada = await novaMulher.save()
+        response.status(201).json(mulherCriada)
+    } catch (erro) {
+        console.log(erro)
+    }
 }
 
-function mostraMulheres(request, response){
-    response.json(mulheres)
+//PATCH - corrigir
+async function corrigeMulher(request, response) {
+    //aqui eu encontro a mulher
+
+    try {
+        const mulherEncontrada = await Mulher.findById(request.params.id)
+        if (request.body.nome) {
+            mulherEncontrada.nome = request.body.nome
+        }
+
+        if (request.body.imagem) {
+            mulherEncontrada.imagem = request.body.imagem
+        }
+
+        if (request.body.minibio) {
+            mulherEncontrada.minibio = request.body.minibio
+        }
+
+        if (request.body.citacao) {
+            mulherEncontrada.citacao = request.body.citacao
+        }
+
+        const mulherAtualizadaNoBancoDeDados = await mulherEncontrada.save()
+        response.json(mulherAtualizadaNoBancoDeDados)
+    } catch (erro) {
+        console.log(erro)
+    }
 }
 
+//DELETE
+async function deletaMulher(request, response) {
+    try{
+        await Mulher.findByIdAndDelete(request.params.id)
+        response.json({messagem:'Mulher deletada com sucesso!'})
+    }catch(erro){
+        console.log(erro)
+    }
+}
+
+//PORTA
 function mostraPorta() {
     console.log("Servidor criado e rodando na porta", porta)
 }
 
-app.use(router.get('/mulheres', mostraMulheres))
-app.listen(porta, mostraPorta)
+app.use(router.get('/mulheres', mostraMulheres))//configurei rota GET /mulheres
+app.use(router.post('/mulheres', criaMulher))//configurei rota POST /mulheres
+app.use(router.patch('/mulheres/:id', corrigeMulher)) //configurei a rota PATCH / mulheres
+app.listen(porta, mostraPorta) //servidor OUVINDO A PORTA
+app.use(router.delete('/mulheres/:id', deletaMulher)) // configurei rota DELETE/mulheres
